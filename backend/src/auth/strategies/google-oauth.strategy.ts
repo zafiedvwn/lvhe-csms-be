@@ -11,10 +11,12 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_REDIRECT_URI'),
       scope: ['email', 'profile'],
+      passReqToCallback: true,
     });
   }
 
   async validate(
+    request: any,
     accessToken: string,
     refreshToken: string,
     profile: any,
@@ -30,20 +32,20 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy, 'google') {
     };
 
     // Get allowed domains from environment variables
-    const allowedDomains = (this.configService
-      .get<string>('ALLOWED_DOMAINS') || '')
+    const allowedDomains = this.configService
+      .get<string>('ALLOWED_DOMAINS', '')
       .split(',')
       .map(domain => domain.trim())
       .filter(domain => domain.length > 0);
 
-    // Check if the email ends with any of the allowed domains
-    const isInstitutionalEmail = allowedDomains.some((domain) =>
-      user.email.endsWith(domain),
-    );
-
-    if (!isInstitutionalEmail) {
-      return done(new Error('Only institutional emails are allowed.'), null);
-    }
+      if (allowedDomains.length > 0) {
+        const isAllowed = allowedDomains.some(domain => 
+          user.email.endsWith(domain)
+        );
+        if (!isAllowed) {
+          return done(new Error('Only institutional emails are allowed'), null);
+        }
+      }
 
     // Pass the user to the callback
     done(null, user);

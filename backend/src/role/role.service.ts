@@ -7,25 +7,25 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class RoleService {
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
-  }
+  // create(createRoleDto: CreateRoleDto) {
+  //   return 'This action adds a new role';
+  // }
 
-  findAll() {
-    return `This action returns all role`;
-  }
+  // findAll() {
+  //   return `This action returns all role`;
+  // }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
-  }
+  // findOne(id: number) {
+  //   return `This action returns a #${id} role`;
+  // }
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
-  }
+  // update(id: number, updateRoleDto: UpdateRoleDto) {
+  //   return `This action updates a #${id} role`;
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} role`;
-  }
+  // remove(id: number) {
+  //   return `This action removes a #${id} role`;
+  // }
 
   constructor(
     @InjectRepository(Role)

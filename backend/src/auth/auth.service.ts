@@ -25,33 +25,40 @@ export class AuthService {
     return this.userService.createUser({ email, firstName, lastName });
   }
 
-  async login(user: User) {
-    const payload = { email: user.email, sub: user.id };
+  async login(user: any) {
+    const payload = { 
+      email: user.email, 
+      sub: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      picture: user.picture
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
+      user: payload
     };
   }
 
-  async generateTokens(user: User) {
-    // Include roles in the JWT payload
-    const payload = { email: user.email, sub: user.id, roles: user.role.role };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+  // async generateTokens(user: User) {
+  //   // Include roles in the JWT payload
+  //   const payload = { email: user.email, sub: user.id, roles: user.role.role };
+  //   const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+  //   const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    await this.userService.updateUserRefreshToken(user.id, refreshToken);
-    return { accessToken, refreshToken };
-  }
+  //   await this.userService.updateUserRefreshToken(user.id, refreshToken);
+  //   return { accessToken, refreshToken };
+  // }
 
-  async refreshTokens(refreshToken: string) {
-    const user = await this.userService.findOneByRefreshToken(refreshToken);
-    if (!user) throw new UnauthorizedException('Invalid refresh token');
+  // async refreshTokens(refreshToken: string) {
+  //   const user = await this.userService.findOneByRefreshToken(refreshToken);
+  //   if (!user) throw new UnauthorizedException('Invalid refresh token');
 
-    const tokens = await this.generateTokens(user);
-    await this.userService.updateUserRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
-  }
+  //   const tokens = await this.generateTokens(user);
+  //   await this.userService.updateUserRefreshToken(user.id, tokens.refreshToken);
+  //   return tokens;
+  // }
 
-  async logout(userId: number) {
-    await this.userService.updateUserRefreshToken(userId, null);
-  }
+  // async logout(userId: number) {
+  //   await this.userService.updateUserRefreshToken(userId, null);
+  // }
 }
