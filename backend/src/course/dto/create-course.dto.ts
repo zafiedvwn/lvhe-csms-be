@@ -1,8 +1,28 @@
+import { IsString, IsNotEmpty, IsTimeZone, IsNumber } from 'class-validator';
+
 export class CreateCourseDto {
-  course_name: string; // Name of the course
-  course_code: string; // Code of the course
-  duration: string; // Duration of the course
-  semester: string; // Semester of the course
-  year: number; // Year of the course
-  program_id: number; // ID of the program
+  @IsString()
+  @IsNotEmpty()
+  course_name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  course_code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  duration: string; // Format: "HH:MM:SS"
+  
+  @IsNumber()
+  @IsNotEmpty()
+  program_id: number;
+  
+  @IsNumber()
+  teacher_id: number;
+
+  @IsString()
+  semester: string; // 'First' or 'Second'
+
+  @IsNumber()
+  year: number; // e.g. 2025
 }
