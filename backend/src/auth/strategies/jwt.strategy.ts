@@ -9,22 +9,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req) => {
-          // Check cookies first
-          if (req.cookies?.access_token) {
-            return req.cookies.access_token;
-          }
-          
-          // Then check authorization header
-          if (req.headers.authorization?.split(' ')[0] === 'Bearer') {
-            return req.headers.authorization.split(' ')[1];
-          }
-          
-          // Then check request body (for POST requests)
-          if (req.body?.token) {
-            return req.body.token;
-          }
-          
-          return null;
+          return req?.cookies?.access_token || 
+                 req?.headers?.authorization?.split(' ')[1];
         },
       ]),
       ignoreExpiration: false,
@@ -52,3 +38,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 //     return { userId: payload.sub, email: payload.email };
 //   }
 // }
+
+          // Check cookies first
+          // if (req.cookies?.access_token) {
+          //   return req.cookies.access_token;
+          // }
+          
+          // // Then check authorization header
+          // if (req.headers.authorization?.split(' ')[0] === 'Bearer') {
+          //   return req.headers.authorization.split(' ')[1];
+          // }
+          
+          // // Then check request body (for POST requests)
+          // if (req.body?.token) {
+          //   return req.body.token;
+          // }
+          
+          // return null;
