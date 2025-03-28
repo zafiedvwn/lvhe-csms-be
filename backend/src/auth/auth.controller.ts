@@ -38,41 +38,42 @@ export class AuthController {
       id: user.id
     });
 
-    const csrfToken = crypto.randomBytes(16).toString('hex');
-    res.cookie('csrf_token', csrfToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
-    });
-
-    // Render a page that posts the token back to frontend
-    res.send(`
-      <html>
-        <body>
-          <form id="form" action="${this.configService.get('FRONTEND_URL')}/api/auth/callback" method="POST">
-            <input type="hidden" name="token" value="${access_token}" />
-          </form>
-          <script>document.getElementById('form').submit();</script>
-        </body>
-      </html>
-    `);
-    }
-
-    @Post('status')
-    @UseGuards(AuthGuard('jwt'))
-    async verifyToken(@Req() req) {
-      return req.user;
-    }
-
     // Redirect to frontend with token
-//     res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}`);
-//   }
+    res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}`);
+  }
 
-//   @Get('status')
-//   @UseGuards(AuthGuard('jwt'))
-//   status(@Req() req) {
-//     return req.user;
-//   }
-// }
+  @Get('status')
+  @UseGuards(AuthGuard('jwt'))
+  status(@Req() req) {
+    return req.user;
+  }
+}
+
+
+    // const csrfToken = crypto.randomBytes(16).toString('hex');
+    // res.cookie('csrf_token', csrfToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production'
+    // });
+
+    // // Render a page that posts the token back to frontend
+    // res.send(`
+    //   <html>
+    //     <body>
+    //       <form id="form" action="${this.configService.get('FRONTEND_URL')}/api/auth/callback" method="POST">
+    //         <input type="hidden" name="token" value="${access_token}" />
+    //       </form>
+    //       <script>document.getElementById('form').submit();</script>
+    //     </body>
+    //   </html>
+    // `);
+    // }
+
+    // @Post('status')
+    // @UseGuards(AuthGuard('jwt'))
+    // async verifyToken(@Req() req) {
+    //   return req.user;
+    // }
     
 //     const user = req.user;
 
@@ -105,4 +106,3 @@ export class AuthController {
 //   async failure(@Req() req, @Res() res: Response) {
 //     res.send('Login failed. Only institutional emails are allowed.');
 //   }
-}
