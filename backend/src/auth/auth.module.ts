@@ -6,9 +6,12 @@ import { AuthController } from './auth.controller';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { RoleModule } from '../role/role.module';
+
 @Module({
   imports: [
     UserModule,
+    RoleModule,
     // JwtModule for JWT token generation and validation
     JwtModule.registerAsync({
       imports: [ConfigModule],

@@ -1,8 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
+import { RoleService } from 'src/role/role.service';
+import { Role } from 'src/role/entities/role.entity';
+import { InvalidTokenException } from './exceptions/invalid-token.exception';
 
 @Injectable()
 export class AuthService {
@@ -10,28 +13,50 @@ export class AuthService {
     private readonly configService: ConfigService,
     private userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly roleService: RoleService,
   ) {}
 
-  async validateUser(email: string, firstName?: string, lastName?: string): Promise<User | null> {
+  async validateUser(email: string, firstName: string, lastName: string, picture: string, role: Role): Promise<User> {
     // Check if the user already exists in the database
-    const user = await this.userService.findOneByEmail(email);
+    let user = await this.userService.findOneByEmail(email);
     
-    if (user) {
-      // If the user exists, return the user
-      return user;
+    if (!user) {
+      // First login - create user
+      user = await this.userService.createUser({ 
+        email, 
+        firstName, 
+        lastName, 
+        profile_picture: picture,
+        role
+      });
+    } 
+    else if (!user.role) {
+      const role = await this.determineUserRole(email);
+      user = await this.userService.updateUser(user.id, { role });
     }
-
-    // If the user doesn't exist, create a new user with firstName and lastName
-    return this.userService.createUser({ email, firstName, lastName });
+  
+    return user;
   }
 
-  async login(user: any) {
+  private async determineUserRole(email: string): Promise<Role> {
+    const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
+    const isStudent = email.toLowerCase().endsWith(studentDomain.toLowerCase());
+    const roleName = isStudent ? 'Student' : 'Staff';
+    
+    try {
+      return await this.roleService.findRoleByName(roleName);
+    } catch {
+      return await this.roleService.createRole(roleName);
+    }
+  }
+  
+  async login(user: User) {
     const payload = { 
       email: user.email, 
       sub: user.id,
-      roles: user.role.role,
-      // name: `${user.firstName} ${user.lastName}`,
-      // picture: user.picture
+      roles: user.role.name,
+      name: `${user.firstName} ${user.lastName}`,
+      picture: user.profile_picture
     };
 
     return {
@@ -40,26 +65,11 @@ export class AuthService {
     };
   }
 
-  // async generateTokens(user: User) {
-  //   // Include roles in the JWT payload
-  //   const payload = { email: user.email, sub: user.id, roles: user.role.role };
-  //   const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-  //   const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-  //   await this.userService.updateUserRefreshToken(user.id, refreshToken);
-  //   return { accessToken, refreshToken };
-  // }
-
-  // async refreshTokens(refreshToken: string) {
-  //   const user = await this.userService.findOneByRefreshToken(refreshToken);
-  //   if (!user) throw new UnauthorizedException('Invalid refresh token');
-
-  //   const tokens = await this.generateTokens(user);
-  //   await this.userService.updateUserRefreshToken(user.id, tokens.refreshToken);
-  //   return tokens;
-  // }
-
-  // async logout(userId: number) {
-  //   await this.userService.updateUserRefreshToken(userId, null);
-  // }
+  verifyToken(token: string): any {
+    try {
+      return this.jwtService.verify(token);
+    } catch (e) {
+      throw new InvalidTokenException();
+    }
+  }
 }
