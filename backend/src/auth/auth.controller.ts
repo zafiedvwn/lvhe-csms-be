@@ -1,9 +1,10 @@
-import { Controller, Get, Req, Res, UseGuards, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards, Post, UseFilters, Body, HttpException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-
+import { LoginResponseDto } from './dto/login-response.dto';
+import { HttpExceptionFilter } from 'src/shared/filters/http-exception.filter';
 
 @Controller('auth')
 export class AuthController {
@@ -25,101 +26,65 @@ export class AuthController {
       return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=auth_failed`);
     }
 
+    try {
     // Validate or create user in your database
-    const user = await this.authService.validateUser(req.user.email);
-    
-    if (!user) {
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=user_not_found`);
-    }
+    const user = await this.authService.validateUser(
+      req.user.email,
+      req.user.firstName,
+      req.user.lastName,
+      req.user.picture,
+      req.user.role
+    );
 
     // Generate JWT token
-    const { access_token } = await this.authService.login({
-      ...req.user,
-      id: user.id
-    });
+    const { access_token } = await this.authService.login(user);
 
-    // Redirect to frontend with token
-    res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}`);
+    // Redirect to frontend with token in POST body
+    return res.redirect(
+      `${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}`
+    );
+  } catch (error) {
+    return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=${error.message}`);
   }
+}
+
+@Post('token')
+@UseFilters(HttpExceptionFilter)
+async verifyToken(@Body('token') token: string) {
+    const payload = this.authService.verifyToken(token);
+    return { 
+      valid: true, 
+      user: {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        role: payload.roles
+      }
+    };
+  }
+
 
   @Get('status')
   @UseGuards(AuthGuard('jwt'))
   status(@Req() req) {
     return req.user;
   }
-
-  @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    // Temporary hardcoded user for testing
-    const testUser = {
-      id: 1,
-      email: 'admin@laverdad.edu.ph',
-      role: { name: 'College Secretary' },
-      password: 'admin123'
-    };
-
-    if (body.email !== testUser.email || body.password !== testUser.password) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return this.authService.login(testUser);
-  }
 }
 
+  // @Post('login')
+  // async login(@Body() body: { email: string; password: string }) {
+  //   // Temporary hardcoded user for testing
+  //   const testUser = {
+  //     id: 1,
+  //     email: 'admin@laverdad.edu.ph',
+  //     role: { name: 'College Secretary' },
+  //     password: 'admin123'
+  //   };
 
-    // const csrfToken = crypto.randomBytes(16).toString('hex');
-    // res.cookie('csrf_token', csrfToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production'
-    // });
+  //   if (body.email !== testUser.email || body.password !== testUser.password) {
+  //     throw new UnauthorizedException('Invalid credentials');
+  //   }
 
-    // // Render a page that posts the token back to frontend
-    // res.send(`
-    //   <html>
-    //     <body>
-    //       <form id="form" action="${this.configService.get('FRONTEND_URL')}/api/auth/callback" method="POST">
-    //         <input type="hidden" name="token" value="${access_token}" />
-    //       </form>
-    //       <script>document.getElementById('form').submit();</script>
-    //     </body>
-    //   </html>
-    // `);
-    // }
-
-    // @Post('status')
-    // @UseGuards(AuthGuard('jwt'))
-    // async verifyToken(@Req() req) {
-    //   return req.user;
-    // }
-    
-//     const user = req.user;
-
-//     // Validate or register the user with firstName and lastName
-//     const validatedUser = await this.authService.validateUser(
-//       user.email,
-//       user.firstName,
-//       user.lastName,
-//     );
-
-//     if (!validatedUser) {
-//       // If the user cannot be validated or registered, redirect to the failure page
-//       return res.redirect('/auth/failure');
-//     }
-
-//     // Generate a JWT token for the user
-//     const token = await this.authService.login(validatedUser);
-
-//     // Redirect to the success page with the JWT token
-//     return res.redirect(`/auth/success?token=${token.access_token}`);
-//   }
-
-//   @Get('success')
-//   async success(@Req() req, @Res() res: Response) {
-//     const token = req.query.token;
-//     res.send(`Login successful! Token: ${token}`);
-//   }
-
-//   @Get('failure')
-//   async failure(@Req() req, @Res() res: Response) {
-//     res.send('Login failed. Only institutional emails are allowed.');
-//   }
+  //   return this.authService.login(testUser);
+  // }
