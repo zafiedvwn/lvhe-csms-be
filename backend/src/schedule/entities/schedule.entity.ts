@@ -19,6 +19,9 @@ export class Schedule {
   @Column()
   day: Date;
 
+  @Column({ default: false })
+  is_published: boolean;
+
   @ManyToOne(() => User, (user) => user.schedules)
   user: User;
 

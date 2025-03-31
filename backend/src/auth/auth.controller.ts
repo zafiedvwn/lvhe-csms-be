@@ -1,9 +1,9 @@
-import { Controller, Get, Req, Res, UseGuards, Post } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+
 
 @Controller('auth')
 export class AuthController {
@@ -46,6 +46,23 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   status(@Req() req) {
     return req.user;
+  }
+
+  @Post('login')
+  async login(@Body() body: { email: string; password: string }) {
+    // Temporary hardcoded user for testing
+    const testUser = {
+      id: 1,
+      email: 'admin@laverdad.edu.ph',
+      role: { name: 'College Secretary' },
+      password: 'admin123'
+    };
+
+    if (body.email !== testUser.email || body.password !== testUser.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return this.authService.login(testUser);
   }
 }
 

@@ -2,13 +2,13 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Up
 import { User } from '../../user/entities/user.entity';
 import { Permission } from '../../permission/entities/permission.entity';
 
-@Entity()
+@Entity('roles')
 export class Role {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  role: string;
+  @Column({ unique: true })
+  name: string;
 
   @OneToMany(() => User, (user) => user.role)
   users: User[];
