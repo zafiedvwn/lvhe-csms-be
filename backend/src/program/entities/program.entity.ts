@@ -11,7 +11,7 @@ export class Program {
   @Column()
   program_name: string;
 
-  @Column({ unique: true })
+  @Column()
   program_code: string;
 
   @OneToMany(() => User, (user) => user.program)

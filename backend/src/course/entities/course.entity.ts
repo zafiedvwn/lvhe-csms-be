@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index, JoinColumn } from 'typeorm';
 import { Program } from '../../program/entities/program.entity';
 import { Schedule } from '../../schedule/entities/schedule.entity';
 import { Request } from '../../request/entities/request.entity';
@@ -12,7 +12,7 @@ export class Course {
   @Column()
   course_name: string;
 
-  @Column({ unique: true })
+  @Column()
   course_code: string;
 
   @Column()
@@ -24,11 +24,13 @@ export class Course {
   @Column()
   year: number;
 
-  @ManyToOne(() => Program, (program) => program.courses)
-  program: Program;
-
+  @Index(['teaching_staff_id'])
   @ManyToOne(() => User, (user) => user.courses)
-  teacher: User;
+  teaching_staff: User;
+
+  @ManyToOne(() => Program, (program) => program.courses)
+  @JoinColumn({ name: 'program_id' })
+  program: Program;
 
   @OneToMany(() => Schedule, (schedule) => schedule.course)
   schedules: Schedule[];
@@ -45,3 +47,5 @@ export class Course {
   @DeleteDateColumn()
   deleted_at: Date;
 }
+
+

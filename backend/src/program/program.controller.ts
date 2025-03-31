@@ -1,34 +1,35 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { CreateProgramDto } from './dto/create-program.dto';
-import { UpdateProgramDto } from './dto/update-program.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @Controller('program')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiTags('Program')
+@ApiBearerAuth()
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
 
   @Post()
-  create(@Body() createProgramDto: CreateProgramDto) {
-    return this.programService.create(createProgramDto);
+  @Roles('College Secretary')
+  @ApiOperation({ summary: 'Create new program (College Secretary only)' })
+  create(@Body() dto: CreateProgramDto) {
+    return this.programService.create(dto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'List all programs' })
   findAll() {
     return this.programService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get program details with courses' })
   findOne(@Param('id') id: string) {
     return this.programService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProgramDto: UpdateProgramDto) {
-    return this.programService.update(+id, updateProgramDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.programService.remove(+id);
-  }
 }

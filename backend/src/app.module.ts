@@ -10,7 +10,7 @@ import { ScheduleModule } from './schedule/schedule.module';
 import { RoomModule } from './room/room.module';
 import { RoleModule } from './role/role.module';
 import { RequestModule } from './request/request.module';
-import { InstructorAvailabilityModule } from './instructor-availability/instructor-availability.module';
+import { TeachingStaffAvailabilityModule } from './teaching-staff-availability/teaching-staff-availability.module';
 import { AuthModule } from './auth/auth.module';
 import { PermissionModule } from './permission/permission.module';
 
@@ -50,7 +50,7 @@ import { PermissionModule } from './permission/permission.module';
 
     RequestModule,
 
-    InstructorAvailabilityModule,
+    TeachingStaffAvailabilityModule,
 
     AuthModule,
 

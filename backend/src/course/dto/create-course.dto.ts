@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsTimeZone, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Matches, IsIn } from 'class-validator';
 
 export class CreateCourseDto {
   @IsString()
@@ -10,19 +10,17 @@ export class CreateCourseDto {
   course_code: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Matches(/^\d{2}:\d{2}:\d{2}$/)
   duration: string; // Format: "HH:MM:SS"
   
-  @IsNumber()
-  @IsNotEmpty()
-  program_id: number;
-  
-  @IsNumber()
-  teacher_id: number;
-
-  @IsString()
+  @IsIn(['First', 'Second'])
   semester: string; // 'First' or 'Second'
 
   @IsNumber()
-  year: number; // e.g. 2025
+  year: number; // e.g. 1 (year)
+
+  @IsNumber()
+  @IsNotEmpty()
+  program_id: number;
+
 }

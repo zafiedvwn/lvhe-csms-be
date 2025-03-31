@@ -6,7 +6,7 @@ import { Room } from '../room/entities/room.entity';
 import { Schedule } from './entities/schedule.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InstructorAvailabilityService } from '../instructor-availability/instructor-availability.service';
+import { TeachingStaffAvailabilityService } from '../teaching-staff-availability/teaching-staff-availability.service';
 
 @Injectable()
 export class ScheduleService {

@@ -4,32 +4,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { Role } from '../role/entities/role.entity';
 
 @Injectable()
 export class UserService {
-  // create(createUserDto: CreateUserDto) {
-  //   return this.createUser(createUserDto);
-  // }
-
-  // findAll() {
-  //   return `This action returns all user`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
-
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
   ) {}
 
   async findOneByEmail(email: string): Promise<User | null> {
@@ -48,4 +29,17 @@ export class UserService {
   async updateUserRefreshToken(userId: number, refreshToken: string | null): Promise<void> {
     await this.userRepository.update(userId, { refreshToken: refreshToken || '' });
   }
+
+  async findTeachingStaff(program_id?: number): Promise<User[]> {
+    const query = this.userRepository.createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'roles')
+      .where('roles.name = :name', { name: 'Teaching Staff' });
+
+    if (program_id) {
+      query.andWhere('user.program_id = :program_id', { program_id });
+    }
+
+    return query.getMany();
+  }
+
 }

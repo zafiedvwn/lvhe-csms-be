@@ -1,26 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { UpdateProgramDto } from './dto/update-program.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Program } from './entities/program.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProgramService {
-  create(createProgramDto: CreateProgramDto) {
-    return 'This action adds a new program';
+  constructor(
+    @InjectRepository(Program) private programRepo: Repository<Program>
+  ) {}
+
+  async create(dto: CreateProgramDto): Promise<Program> {
+    return this.programRepo.save(dto);
   }
 
-  findAll() {
-    return `This action returns all program`;
+  async findAll(): Promise<Program[]> {
+    return this.programRepo.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} program`;
-  }
-
-  update(id: number, updateProgramDto: UpdateProgramDto) {
-    return `This action updates a #${id} program`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} program`;
+  async findOne(id: number): Promise<Program> {
+    const program = await this.programRepo.findOne({ 
+      where: { id },
+      relations: ['courses', 'users'] 
+    });
+    if (!program) throw new NotFoundException('Program not found');
+    return program;
   }
 }
