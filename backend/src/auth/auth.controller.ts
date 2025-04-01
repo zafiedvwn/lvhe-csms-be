@@ -23,10 +23,17 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     if (!req.user) {
+      console.error('No user object in request');
       return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=auth_failed`);
     }
 
     try {
+      console.log('OAuth user data:', req.user);
+
+      if (!req.user.email) {
+        throw new Error('No email in user data');
+      }
+
     // Validate or create user in your database
     const user = await this.authService.validateUser(
       req.user.email,
@@ -41,10 +48,10 @@ export class AuthController {
 
     // Redirect to frontend with token in POST body
     return res.redirect(
-      `${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}`
+      `${this.configService.get('FRONTEND_URL')}/auth/success?token=${access_token}&role=${user.role.name}`
     );
   } catch (error) {
-    return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=${error.message}`);
+    return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=${encodeURIComponent(error.message)}`);  
   }
 }
 

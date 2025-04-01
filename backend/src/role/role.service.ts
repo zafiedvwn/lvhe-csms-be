@@ -18,8 +18,14 @@ export class RoleService {
   }
 
   async findRoleByName(name: string): Promise<Role> {
-    const role = await this.roleRepository.findOne({ where: { name: name } });
-    if (!role) throw new NotFoundException(`Role ${name} not found`);
+    const role = await this.roleRepository.findOne({ where: { name: name },
+      relations: ['users']
+    });
+
+    if (!role) {
+      console.warn(`Role ${name} not found, creating it`);
+      return this.createRole(name);
+    }
     return role;
   }
 }

@@ -19,11 +19,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (!payload.sub || !payload.email) {
+      throw new Error('Invalid token payload');
+    }
+
     return { 
       userId: payload.sub, 
       email: payload.email,
-      name: payload.name,
-      picture: payload.picture
+      name: payload.name || '',
+      picture: payload.picture || '',
+      roles: payload.roles || []
     };
   }
 }
