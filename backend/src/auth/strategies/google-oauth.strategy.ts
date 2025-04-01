@@ -27,48 +27,64 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
+    try {
     const { name, emails, photos } = profile;
-    const email = emails[0].value;
+    if (!emails || !emails[0] || !emails[0].value) {
+      return done(new Error('No email found in profile'), null);
+    }
 
-    // Get allowed domains from environment variables
-    const allowedDomains = this.configService
-      .get<string>('ALLOWED_DOMAINS', '')
-      .split(',')
-      .map(domain => domain.trim())
-      .filter(domain => domain.length > 0);
+      const email = emails[0].value;
+      console.log('Google profile received:', { email, name, photos });
 
-    if (allowedDomains.length > 0) {
-      const isAllowed = allowedDomains.some(domain => 
-        email.endsWith(domain)
-      );
-      if (!isAllowed) {
-        return done(new Error('Only institutional emails are allowed'), null);
+      // Get allowed domains from environment variables
+      const allowedDomains = this.configService
+        .get<string>('ALLOWED_DOMAINS', '')
+        .split(',')
+        .map(domain => domain.trim())
+        .filter(domain => domain.length > 0);
+
+      if (allowedDomains.length > 0) {
+        const isAllowed = allowedDomains.some(domain => 
+          email.endsWith(domain)
+        );
+        if (!isAllowed) {
+          return done(new Error('Only institutional emails are allowed'), null);
+        }
+      }
+
+      // Determine role based on email domain
+      const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
+      const isStudent = email.endsWith(studentDomain);
+      const roleName = isStudent ? 'Student' : 'Staff';
+
+      // Get or create the role
+      let role: Role;
+      try {
+        role = await this.roleService.findRoleByName(roleName);
+      } catch (e) {
+        role = await this.roleService.createRole(roleName);
+      }
+
+      if (!role) {
+        console.error('Role was not properly created/assigned');
+        return done(new Error('Role assignment failed'), null);
+      }
+
+      const user = {
+        email,
+        firstName: name?.givenName,
+        lastName: name?.familyName,
+        picture: photos?.[0]?.value || this.configService.get<string>('DEFAULT_PROFILE_PICTURE'),
+        accessToken,
+        role,
+      };
+        
+        console.log('User object being passed:', user);
+        done(null, user);
+      } catch (error) {
+        console.error('Error in Google OAuth validation:', error);
+        done(error, null);
       }
     }
-
-    // Determine role based on email domain
-    const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
-    const isStudent = email.endsWith(studentDomain);
-    const roleName = isStudent ? 'Student' : 'Staff';
-
-    // Get or create the role
-    let role: Role;
-    try {
-      role = await this.roleService.findRoleByName(roleName);
-    } catch (e) {
-      role = await this.roleService.createRole(roleName);
-    }
-
-    const user = {
-      email,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value || this.configService.get<string>('DEFAULT_PROFILE_PICTURE'),
-      accessToken,
-      role,
-    };
-
-    // Pass the user to the callback
-    done(null, user);
-  }
 }
+

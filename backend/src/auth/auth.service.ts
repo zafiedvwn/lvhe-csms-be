@@ -17,10 +17,20 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, firstName: string, lastName: string, picture: string, role: Role): Promise<User> {
+    if (!email) {
+      throw new Error('Email is required');
+    }
+    
     // Check if the user already exists in the database
     let user = await this.userService.findOneByEmail(email);
     
     if (!user) {
+      if (!role) {
+        role = await this.determineUserRole(email);
+        if (!role) {
+          throw new Error('Failed to determine or create user role');
+        }
+      }
       // First login - create user
       user = await this.userService.createUser({ 
         email, 
@@ -34,18 +44,36 @@ export class AuthService {
       const role = await this.determineUserRole(email);
       user = await this.userService.updateUser(user.id, { role });
     }
+
+    if (!user.role) {
+      throw new Error('User role could not be determined');
+    }
   
     return user;
   }
 
   private async determineUserRole(email: string): Promise<Role> {
-    const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
-    const isStudent = email.toLowerCase().endsWith(studentDomain.toLowerCase());
-    const roleName = isStudent ? 'Student' : 'Staff';
+    if (process.env.NODE_ENV === 'development') {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     
+    console.log(`Determining role for email: ${email}`);
+
+    const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
+    console.log(`Student domain: ${studentDomain}`);
+    
+    const isStudent = email.toLowerCase().endsWith(studentDomain.toLowerCase());
+    console.log(`Is student: ${isStudent}`);
+
+    const roleName = isStudent ? 'Student' : 'Staff';
+    console.log(`Role name: ${roleName}`);
+
     try {
-      return await this.roleService.findRoleByName(roleName);
-    } catch {
+      const role = await this.roleService.findRoleByName(roleName);
+      console.log(`Found existing role:`, role);
+      return role;
+    } catch (error) {
+      console.log(`Role not found, creating new role: ${roleName}`);
       return await this.roleService.createRole(roleName);
     }
   }
