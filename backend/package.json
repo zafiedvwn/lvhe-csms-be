@@ -36,7 +36,8 @@
     "test:watch": "jest --watch",
     "test:debug": "jest --runInBand --debug",
     "test:coverage": "jest --coverage",
-    "test:e2e": "jest --config test/jest-e2e.json"
+    "test:e2e": "jest --config test/jest-e2e.json",
+    "debug": "npx nest --version"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
