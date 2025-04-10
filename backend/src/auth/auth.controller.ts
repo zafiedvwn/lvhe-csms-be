@@ -23,15 +23,14 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     if (!req.user) {
-      console.error('No user object in request');
       return res.redirect(`${this.configService.get('FRONTEND_URL')}/login?error=auth_failed`);
     }
 
     try {
-      console.log('OAuth user data:', req.user);
+      console.log('OAuth user data:', JSON.stringify(req.user, null, 2));
 
-      if (!req.user.email) {
-        throw new Error('No email in user data');
+      if (!req.user.role) {
+        throw new Error('No role in OAuth user');
       }
 
     // Validate or create user in your database

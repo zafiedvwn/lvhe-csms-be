@@ -17,63 +17,52 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, firstName: string, lastName: string, picture: string, role: Role): Promise<User> {
-    if (!email) {
-      throw new Error('Email is required');
-    }
+    if (!email) throw new Error('Email is required');
     
-    // Check if the user already exists in the database
-    let user = await this.userService.findOneByEmail(email);
+    try {
+      let user = await this.userService.findOneByEmail(email);
+      const roleToAssign = role || await this.determineUserRole(email);
     
-    if (!user) {
-      if (!role) {
-        role = await this.determineUserRole(email);
-        if (!role) {
-          throw new Error('Failed to determine or create user role');
+      if (!roleToAssign) {
+        throw new Error('Failed to determine user role');
         }
+    
+        if (!user) {
+          // Create new user with determined role
+          user = await this.userService.createUser({
+            email,
+            firstName,
+            lastName,
+            profile_picture: picture,
+            role: roleToAssign
+          });
+        } else if (!user.role) {
+          // Update existing user with role
+          user = await this.userService.updateUser(user.id, { role: roleToAssign });
+        }
+    
+        // Ensure user has role before returning
+        if (!user.role) {
+          throw new Error('User role assignment failed');
+        }
+    
+        return user;
+      } catch (error) {
+        console.error('Error in validateUser:', error);
+        throw new Error('User validation failed: ' + error.message);
       }
-      // First login - create user
-      user = await this.userService.createUser({ 
-        email, 
-        firstName, 
-        lastName, 
-        profile_picture: picture,
-        role
-      });
-    } 
-    else if (!user.role) {
-      const role = await this.determineUserRole(email);
-      user = await this.userService.updateUser(user.id, { role });
     }
-
-    if (!user.role) {
-      throw new Error('User role could not be determined');
-    }
-  
-    return user;
-  }
 
   private async determineUserRole(email: string): Promise<Role> {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    console.log(`Determining role for email: ${email}`);
-
     const studentDomain = this.configService.get<string>('STUDENT_EMAIL_DOMAIN', '@student.laverdad.edu.ph');
-    console.log(`Student domain: ${studentDomain}`);
-    
     const isStudent = email.toLowerCase().endsWith(studentDomain.toLowerCase());
-    console.log(`Is student: ${isStudent}`);
-
     const roleName = isStudent ? 'Student' : 'Staff';
-    console.log(`Role name: ${roleName}`);
-
+  
     try {
-      const role = await this.roleService.findRoleByName(roleName);
-      console.log(`Found existing role:`, role);
-      return role;
-    } catch (error) {
-      console.log(`Role not found, creating new role: ${roleName}`);
+      // Try to find existing role first
+      return await this.roleService.findRoleByName(roleName);
+    } catch {
+      // If role doesn't exist, create it
       return await this.roleService.createRole(roleName);
     }
   }

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Program } from '../../program/entities/program.entity';
 import { Schedule } from '../../schedule/entities/schedule.entity';
 import { Request } from '../../request/entities/request.entity';
@@ -37,6 +37,23 @@ export class Course {
 
   @OneToMany(() => Request, (request) => request.course)
   requests: Request[];
+
+  @ManyToMany(() => Course, course => course.id)
+  @JoinTable({
+    name: 'course_prerequisites',
+    joinColumn: { name: 'course_id' },
+    inverseJoinColumn: { name: 'prerequisite_id' }
+  })
+  prerequisites: Course[];
+
+  @Column({ type: 'jsonb', default: [] })
+  year_level_semesters: { 
+    year_level: number; 
+    semesters: number[] 
+  }[];
+
+  @Column({ default: false })
+  is_core: boolean;
 
   @CreateDateColumn()
   created_at: Date;
