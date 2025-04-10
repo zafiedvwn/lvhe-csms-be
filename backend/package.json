@@ -27,7 +27,7 @@
   },
   "scripts": {
     "preinstall": "echo 'Running pre-install steps...'",
-    "postinstall": "echo 'Running post-install steps...'",
+    "postinstall": "npx nest --version",
     "setup": "npm install",
     "start": "nest start",
     "start:dev": "nest start --watch",
